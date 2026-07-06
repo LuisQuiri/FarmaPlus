@@ -2,6 +2,9 @@
 
 $router->get('/', 'HomeController', 'index');
 $router->get('productos', 'ProductoController', 'index');
+$router->post('productos/guardar', 'ProductoController', 'guardar');
+$router->post('productos/actualizar', 'ProductoController', 'actualizar');
+$router->post('productos/eliminar', 'ProductoController', 'eliminar');
 $router->get('ventas', 'VentaController', 'index');
 $router->get('clientes', 'ClienteController', 'index');
 $router->get('proveedores', 'ProveedorController', 'index');
