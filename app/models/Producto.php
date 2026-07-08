@@ -56,7 +56,7 @@ class Producto extends Model
                 FROM productos p
                 INNER JOIN inventario i ON p.id_producto = i.id_producto
                 WHERE p.estado = 1
-                AND i.stock_actual < 3";
+                AND i.stock_actual <= i.stock_minimo";
 
         $stmt = $this->db->query($sql);
 
@@ -92,11 +92,13 @@ class Producto extends Model
     public function listarProveedores()
     {
         $sql = "SELECT 
-                id_proveedor,
-                razon_social
-            FROM proveedores
-            WHERE estado = 1
-            ORDER BY razon_social ASC";
+            id_proveedor,
+            razon_social,
+            correo,
+            id_categoria
+        FROM proveedores
+        WHERE estado = 1
+        ORDER BY razon_social ASC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute();

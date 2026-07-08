@@ -59,8 +59,8 @@ class Usuario extends Model
     }
 
     public function guardar($datos)
-{
-    $sql = "INSERT INTO usuarios (
+    {
+        $sql = "INSERT INTO usuarios (
                 id_rol,
                 nombres,
                 apellidos,
@@ -80,14 +80,14 @@ class Usuario extends Model
                 :estado
             )";
 
-    $stmt = $this->db->prepare($sql);
+        $stmt = $this->db->prepare($sql);
 
-    return $stmt->execute($datos);
-}
+        return $stmt->execute($datos);
+    }
 
-public function actualizar($datos)
-{
-    $sql = "UPDATE usuarios SET
+    public function actualizar($datos)
+    {
+        $sql = "UPDATE usuarios SET
                 id_rol = :id_rol,
                 nombres = :nombres,
                 apellidos = :apellidos,
@@ -97,19 +97,45 @@ public function actualizar($datos)
                 estado = :estado
             WHERE id_usuario = :id_usuario";
 
-    $stmt = $this->db->prepare($sql);
+        $stmt = $this->db->prepare($sql);
 
-    return $stmt->execute($datos);
-}
+        return $stmt->execute($datos);
+    }
 
-public function eliminar($idUsuario)
-{
-    $sql = "DELETE FROM usuarios WHERE id_usuario = :id_usuario";
+    public function eliminar($idUsuario)
+    {
+        $sql = "DELETE FROM usuarios WHERE id_usuario = :id_usuario";
 
-    $stmt = $this->db->prepare($sql);
+        $stmt = $this->db->prepare($sql);
 
-    return $stmt->execute([
-        'id_usuario' => $idUsuario
-    ]);
-}
+        return $stmt->execute([
+            'id_usuario' => $idUsuario
+        ]);
+    }
+
+    public function buscarParaLogin($usuario)
+    {
+        $sql = "SELECT 
+                u.id_usuario,
+                u.nombres,
+                u.apellidos,
+                u.correo,
+                u.usuario,
+                u.password_hash,
+                u.estado,
+                r.id_rol,
+                r.nombre_rol
+            FROM usuarios u
+            INNER JOIN roles r ON u.id_rol = r.id_rol
+            WHERE (u.usuario = :usuario OR u.correo = :usuario)
+            AND u.estado = 1
+            AND r.estado = 1
+            LIMIT 1";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':usuario', $usuario);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }

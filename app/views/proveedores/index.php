@@ -1,3 +1,13 @@
+<?php
+$proveedores = $proveedores ?? [];
+$categorias = $categorias ?? [];
+
+$total_proveedores = $total_proveedores ?? 0;
+$ordenes_pendientes = $ordenes_pendientes ?? 0;
+$envios_retraso = $envios_retraso ?? 0;
+$lista_ordenes_pendientes = $lista_ordenes_pendientes ?? [];
+?>
+
 <div class="proveedores-contenedor">
 
     <h1>Proveedores</h1>
@@ -8,15 +18,12 @@
             <p><?= $total_proveedores ?></p>
         </div>
 
-        <a href="index.php?url=inventario" class="tarjeta-resumen tarjeta-link">
-            <h3>Órdenes pendientes</h3>
+        <div class="tarjeta-resumen tarjeta-link" id="cardOrdenesPendientes" onclick="mostrarOrdenesPendientes()">
+            <h3>Ordenes pendientes</h3>
             <p><?= $ordenes_pendientes ?></p>
-        </a>
+        </div>
 
-        <a href="index.php?url=inventario" class="tarjeta-resumen tarjeta-link">
-            <h3>Envíos con retraso</h3>
-            <p><?= $envios_retraso ?></p>
-        </a>
+
     </div>
 
     <div class="proveedores-barra">
@@ -44,41 +51,97 @@
 
             <tbody id="tablaProveedores">
                 <?php if (!empty($proveedores)): ?>
-                <?php foreach ($proveedores as $proveedor): ?>
-                <tr>
-                    <td><?= $proveedor['id_proveedor'] ?></td>
-                    <td><?= $proveedor['razon_social'] ?></td>
-                    <td><?= $proveedor['contacto'] ?></td>
-                    <td><?= $proveedor['telefono'] ?></td>
-                    <td><?= $proveedor['correo'] ?></td>
-                    <td><?= $proveedor['fecha_creacion'] ?></td>
-                    <td><?= $proveedor['categoria'] ?></td>
-                    <td>
-                        <button type="button" class="btn-editar btnEditarProveedor"
-                            data-id="<?= $proveedor['id_proveedor'] ?>" data-razon="<?= $proveedor['razon_social'] ?>"
-                            data-contacto="<?= $proveedor['contacto'] ?>" data-telefono="<?= $proveedor['telefono'] ?>"
-                            data-correo="<?= $proveedor['correo'] ?>" data-categoria="<?= $proveedor['categoria'] ?>">
-                            Editar
-                        </button>
+                    <?php foreach ($proveedores as $proveedor): ?>
+                        <tr>
+                            <td><?= $proveedor['id_proveedor'] ?></td>
+                            <td><?= $proveedor['razon_social'] ?></td>
+                            <td><?= $proveedor['contacto'] ?></td>
+                            <td><?= $proveedor['telefono'] ?></td>
+                            <td><?= $proveedor['correo'] ?></td>
+                            <td><?= $proveedor['fecha_creacion'] ?></td>
+                            <td><?= $proveedor['categoria'] ?></td>
+                            <td>
+                                <button type="button" class="btn-editar btnEditarProveedor"
+                                    data-id="<?= $proveedor['id_proveedor'] ?>"
+                                    data-razon="<?= htmlspecialchars($proveedor['razon_social'], ENT_QUOTES, 'UTF-8') ?>"
+                                    data-contacto="<?= htmlspecialchars($proveedor['contacto'], ENT_QUOTES, 'UTF-8') ?>"
+                                    data-telefono="<?= htmlspecialchars($proveedor['telefono'], ENT_QUOTES, 'UTF-8') ?>"
+                                    data-correo="<?= htmlspecialchars($proveedor['correo'], ENT_QUOTES, 'UTF-8') ?>"
+                                    data-categoria="<?= htmlspecialchars($proveedor['categoria'], ENT_QUOTES, 'UTF-8') ?>"
+                                    data-id-categoria="<?= $proveedor['id_categoria'] ?>">
+                                    Editar
+                                </button>
 
-                        <button 
-    type="button" 
-    class="btn-eliminar btnEliminarProveedor"
-    data-id="<?= $proveedor['id_proveedor'] ?>"
-    data-razon="<?= $proveedor['razon_social'] ?>"
->
-    Eliminar
-</button>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
+                                <button
+                                    type="button"
+                                    class="btn-eliminar btnEliminarProveedor"
+                                    data-id="<?= $proveedor['id_proveedor'] ?>"
+                                    data-razon="<?= $proveedor['razon_social'] ?>">
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
                 <?php else: ?>
-                <tr>
-                    <td colspan="8">No hay proveedores registrados.</td>
-                </tr>
+                    <tr>
+                        <td colspan="8">No hay proveedores registrados.</td>
+                    </tr>
                 <?php endif; ?>
             </tbody>
         </table>
+    </div>
+</div>
+<!-- Modal Órdenes Pendientes -->
+<div id="modalOrdenesPendientes" class="modal-ordenes-pendientes">
+
+    <div class="modal-ordenes-contenido">
+
+        <div class="modal-ordenes-header">
+            <h2>Órdenes pendientes</h2>
+            <button type="button" class="btn-cerrar-ordenes" onclick="cerrarOrdenesPendientes()">×</button>
+        </div>
+
+        <div class="modal-ordenes-tabla">
+            <table>
+                <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th>Categoría</th>
+                        <th>Tipo medicamento</th>
+                        <th>Proveedor</th>
+                        <th>Producto solicitado</th>
+                        <th>Cantidad</th>
+                        <th>Correo</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <?php if (!empty($lista_ordenes_pendientes)): ?>
+                        <?php $contador = 1; ?>
+                        <?php foreach ($lista_ordenes_pendientes as $orden): ?>
+                            <tr>
+                                <td><?= $contador++ ?></td>
+                                <td><?= $orden['nombre_categoria'] ?></td>
+                                <td><?= $orden['nombre_tipo'] ?? 'No aplica' ?></td>
+                                <td><?= $orden['razon_social'] ?></td>
+                                <td><?= $orden['nombre_producto'] ?></td>
+                                <td><?= $orden['cantidad_solicitada'] ?></td>
+                                <td><?= $orden['correo_proveedor'] ?></td>
+                                <td><?= $orden['estado'] ?></td>
+                                <td><?= $orden['fecha_orden'] ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="9">No hay órdenes pendientes.</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+
     </div>
 
 </div>
@@ -106,12 +169,14 @@
             <input type="email" name="correo" required>
 
             <label>Categoría</label>
-            <select name="categoria" required>
+            <select name="id_categoria" id="id_categoria" required>
                 <option value="">Seleccione una categoría</option>
-                <option value="Salud">Salud</option>
-                <option value="Cuidado de la piel">Cuidado de la piel</option>
-                <option value="Cuidado bucal">Cuidado bucal</option>
-                <option value="Higiene personal">Higiene personal</option>
+
+                <?php foreach ($categorias as $categoria): ?>
+                    <option value="<?php echo $categoria['id_categoria']; ?>">
+                        <?php echo htmlspecialchars($categoria['nombre_categoria'], ENT_QUOTES, 'UTF-8'); ?>
+                    </option>
+                <?php endforeach; ?>
             </select>
 
             <label>Dirección</label>
@@ -153,12 +218,15 @@
             <input type="email" name="correo" id="editar_correo" required>
 
             <label>Categoría</label>
-            <select name="categoria" id="editar_categoria" required>
+
+            <select name="id_categoria" id="editar_id_categoria" required>
                 <option value="">Seleccione una categoría</option>
-                <option value="Salud">Salud</option>
-                <option value="Cuidado de la piel">Cuidado de la piel</option>
-                <option value="Cuidado bucal">Cuidado bucal</option>
-                <option value="Higiene personal">Higiene personal</option>
+
+                <?php foreach ($categorias as $categoria): ?>
+                    <option value="<?php echo $categoria['id_categoria']; ?>">
+                        <?php echo htmlspecialchars($categoria['nombre_categoria'], ENT_QUOTES, 'UTF-8'); ?>
+                    </option>
+                <?php endforeach; ?>
             </select>
 
             <div class="modal-proveedor-botones">
@@ -202,52 +270,71 @@
 </div>
 
 <script>
-const btnNuevoProveedor = document.getElementById('btnNuevoProveedor');
-const modalNuevoProveedor = document.getElementById('modalNuevoProveedor');
-const btnCancelarNuevoProveedor = document.getElementById('btnCancelarNuevoProveedor');
-const modalEditarProveedor = document.getElementById('modalEditarProveedor');
-const btnCancelarEditarProveedor = document.getElementById('btnCancelarEditarProveedor');
-const botonesEditarProveedor = document.querySelectorAll('.btnEditarProveedor');
-const modalEliminarProveedor = document.getElementById('modalEliminarProveedor');
-const btnCancelarEliminarProveedor = document.getElementById('btnCancelarEliminarProveedor');
-const botonesEliminarProveedor = document.querySelectorAll('.btnEliminarProveedor');
+    const btnNuevoProveedor = document.getElementById('btnNuevoProveedor');
+    const modalNuevoProveedor = document.getElementById('modalNuevoProveedor');
+    const btnCancelarNuevoProveedor = document.getElementById('btnCancelarNuevoProveedor');
+    const modalEditarProveedor = document.getElementById('modalEditarProveedor');
+    const btnCancelarEditarProveedor = document.getElementById('btnCancelarEditarProveedor');
+    const botonesEditarProveedor = document.querySelectorAll('.btnEditarProveedor');
+    const modalEliminarProveedor = document.getElementById('modalEliminarProveedor');
+    const btnCancelarEliminarProveedor = document.getElementById('btnCancelarEliminarProveedor');
+    const botonesEliminarProveedor = document.querySelectorAll('.btnEliminarProveedor');
 
-btnNuevoProveedor.addEventListener('click', function() {
-    modalNuevoProveedor.style.display = 'flex';
-});
-
-btnCancelarNuevoProveedor.addEventListener('click', function() {
-    modalNuevoProveedor.style.display = 'none';
-});
-
-botonesEditarProveedor.forEach(function (boton) {
-    boton.addEventListener('click', function () {
-        document.getElementById('editar_id_proveedor').value = this.dataset.id;
-        document.getElementById('editar_razon_social').value = this.dataset.razon;
-        document.getElementById('editar_contacto').value = this.dataset.contacto;
-        document.getElementById('editar_telefono').value = this.dataset.telefono;
-        document.getElementById('editar_correo').value = this.dataset.correo;
-        document.getElementById('editar_categoria').value = this.dataset.categoria;
-
-        modalEditarProveedor.style.display = 'flex';
+    btnNuevoProveedor.addEventListener('click', function() {
+        modalNuevoProveedor.style.display = 'flex';
     });
-});
 
-btnCancelarEditarProveedor.addEventListener('click', function () {
-    modalEditarProveedor.style.display = 'none';
-});
-
-botonesEliminarProveedor.forEach(function (boton) {
-    boton.addEventListener('click', function () {
-        document.getElementById('eliminar_id_proveedor').value = this.dataset.id;
-        document.getElementById('textoEliminarProveedor').textContent =
-            '¿Está seguro de eliminar el proveedor "' + this.dataset.razon + '"?';
-
-        modalEliminarProveedor.style.display = 'flex';
+    btnCancelarNuevoProveedor.addEventListener('click', function() {
+        modalNuevoProveedor.style.display = 'none';
     });
-});
 
-btnCancelarEliminarProveedor.addEventListener('click', function () {
-    modalEliminarProveedor.style.display = 'none';
-});
+    botonesEditarProveedor.forEach(function(boton) {
+        boton.addEventListener('click', function() {
+            document.getElementById('editar_id_proveedor').value = this.dataset.id;
+            document.getElementById('editar_razon_social').value = this.dataset.razon;
+            document.getElementById('editar_contacto').value = this.dataset.contacto;
+            document.getElementById('editar_telefono').value = this.dataset.telefono;
+            document.getElementById('editar_correo').value = this.dataset.correo;
+            document.getElementById('editar_id_categoria').value = this.dataset.idcategoria;
+
+            modalEditarProveedor.style.display = 'flex';
+        });
+    });
+
+    btnCancelarEditarProveedor.addEventListener('click', function() {
+        modalEditarProveedor.style.display = 'none';
+    });
+
+    botonesEliminarProveedor.forEach(function(boton) {
+        boton.addEventListener('click', function() {
+            document.getElementById('eliminar_id_proveedor').value = this.dataset.id;
+            document.getElementById('textoEliminarProveedor').textContent =
+                '¿Está seguro de eliminar el proveedor "' + this.dataset.razon + '"?';
+
+            modalEliminarProveedor.style.display = 'flex';
+        });
+    });
+
+    btnCancelarEliminarProveedor.addEventListener('click', function() {
+        modalEliminarProveedor.style.display = 'none';
+    });
+</script>
+<script>
+function mostrarOrdenesPendientes() {
+    const modal = document.getElementById('modalOrdenesPendientes');
+
+    if (modal) {
+        modal.style.display = 'flex';
+    } else {
+        alert('No se encontró el modal de órdenes pendientes');
+    }
+}
+
+function cerrarOrdenesPendientes() {
+    const modal = document.getElementById('modalOrdenesPendientes');
+
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
 </script>

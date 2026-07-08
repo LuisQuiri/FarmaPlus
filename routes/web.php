@@ -1,11 +1,17 @@
 <?php
 
 $router->get('/', 'HomeController', 'index');
+$router->get('login', 'LoginController', 'index');
+$router->post('login/autenticar', 'LoginController', 'autenticar');
+$router->get('logout', 'LoginController', 'salir');
 $router->get('productos', 'ProductoController', 'index');
 $router->post('productos/guardar', 'ProductoController', 'guardar');
 $router->post('productos/actualizar', 'ProductoController', 'actualizar');
 $router->post('productos/eliminar', 'ProductoController', 'eliminar');
+$router->post('productos/ordenar', 'ProductoController', 'ordenar');
 $router->get('ventas', 'VentaController', 'index');
+$router->get('ventas/buscar', 'VentaController', 'buscarMedicamento');
+$router->post('ventas/registrar', 'VentaController', 'registrar');
 $router->get('clientes', 'ClienteController', 'index');
 $router->get('proveedores', 'ProveedorController', 'index');
 $router->post('proveedores/guardar', 'ProveedorController', 'guardar');

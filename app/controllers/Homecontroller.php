@@ -1,18 +1,33 @@
 <?php
 
 require_once __DIR__ . '/../Core/Controller.php';
-
+require_once __DIR__ . '/../core/Auth.php';
+require_once __DIR__ . '/../Models/Dashboard.php';
 class HomeController extends Controller
 {
-    public function index()
+        public function __construct()
     {
-        $data = [
-            'title' => 'Inicio',
-            'message' => 'Arquitectura MVC de FarmaPlus funcionando correctamente.'
-        ];
-
-        $this->view('home/index', $data);
+        Auth::verificarRol([1]);
     }
+    
+    public function index()
+{
+    $dashboard = new Dashboard();
+
+    $data = [
+        'title' => 'Dashboard',
+        'totalProductos' => $dashboard->totalProductosActivos(),
+        'totalVentas' => $dashboard->totalVentasRealizadas(),
+        'totalVendido' => $dashboard->totalVendido(),
+        'bajoStock' => $dashboard->productosBajoStock(),
+        'vencidos' => $dashboard->productosVencidos(),
+        'porVencer' => $dashboard->productosPorVencer(),
+        'ordenesPendientes' => $dashboard->ordenesPendientes(),
+        'ultimasVentas' => $dashboard->ultimasVentas()
+    ];
+
+    $this->view('home/index', $data);
+}
 
     public function productos()
     {

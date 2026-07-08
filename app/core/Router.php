@@ -13,12 +13,12 @@ class Router
     }
 
     public function post(string $url, string $controller, string $method)
-{
-    $this->routes['POST'][$url] = [
-        'controller' => $controller,
-        'method' => $method
-    ];
-}
+    {
+        $this->routes['POST'][$url] = [
+            'controller' => $controller,
+            'method' => $method
+        ];
+    }
 
     public function run()
     {
@@ -36,7 +36,7 @@ class Router
             $controllerName = $route['controller'];
             $methodName = $route['method'];
 
-            $controllerPath = __DIR__ . '/../Controllers/' . $controllerName . '.php';
+            $controllerPath = __DIR__ . '/../controllers/' . $controllerName . '.php';
 
             if (!file_exists($controllerPath)) {
                 die("El controlador no existe: " . $controllerName);

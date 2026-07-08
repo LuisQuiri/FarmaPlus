@@ -1,31 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    const medicamentos = [
-        {
-            codigo: 'ATB001',
-            nombre: 'Azitromicina',
-            categoria: 'Genérico',
-            precio: 3.00,
-            unidades: 30,
-            vencimiento: '31/12/2027'
-        },
-        {
-            codigo: 'ATB002',
-            nombre: 'Ciprofloxacino',
-            categoria: 'Genérico',
-            precio: 2.80,
-            unidades: 30,
-            vencimiento: '30/11/2027'
-        },
-        {
-            codigo: 'ATB003',
-            nombre: 'Cefalexina',
-            categoria: 'Sporidex',
-            precio: 2.50,
-            unidades: 5,
-            vencimiento: '31/10/2027'
-        }
-    ];
+    let medicamentos = [];
 
     const inputBuscar = document.getElementById('buscarMedicamento');
     const btnBuscar = document.getElementById('btnBuscarMedicamento');
@@ -110,8 +85,8 @@ document.addEventListener('DOMContentLoaded', function () {
     btnImprimirComprobante.addEventListener('click', finalizarCompra);
     btnRegistrarSinImprimir.addEventListener('click', finalizarCompra);
 
-    function buscarMedicamento() {
-        const texto = inputBuscar.value.trim().toLowerCase();
+        function buscarMedicamento() {
+        const texto = inputBuscar.value.trim();
 
         if (texto === '') {
             tablaResultados.innerHTML = '<tr><td colspan="8">Debe ingresar un medicamento.</td></tr>';
@@ -119,17 +94,34 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const resultados = medicamentos.filter(function (medicamento) {
-            return medicamento.nombre.toLowerCase().includes(texto);
-        });
+        fetch('/farmaplus/index.php?url=ventas/buscar&texto=' + encodeURIComponent(texto))
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (respuesta) {
+                medicamentos = respuesta.data.map(function (producto) {
+                    return {
+                        id_producto: producto.id_producto,
+                        codigo: producto.codigo_producto,
+                        nombre: producto.nombre_producto,
+                        categoria: producto.id_categoria,
+                        precio: parseFloat(producto.precio_venta),
+                        unidades: parseInt(producto.stock_actual),
+                        vencimiento: producto.fecha_vencimiento
+                    };
+                });
 
-        mostrarResultados(resultados);
+                mostrarResultados(medicamentos);
 
-        if (resultados.length > 0) {
-            mostrarRecomendados(resultados[0]);
-        } else {
-            tablaRecomendados.innerHTML = '<tr><td colspan="8">No hay medicamentos recomendados.</td></tr>';
-        }
+                if (medicamentos.length > 0) {
+                    mostrarRecomendados(medicamentos[0]);
+                } else {
+                    tablaRecomendados.innerHTML = '<tr><td colspan="8">No hay medicamentos recomendados.</td></tr>';
+                }
+            })
+            .catch(function () {
+                tablaResultados.innerHTML = '<tr><td colspan="8">Error al buscar medicamentos.</td></tr>';
+            });
     }
 
     function mostrarResultados(lista) {
@@ -220,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function () {
         totalVenta.textContent = total.toFixed(2);
     }
 
-    function finalizarCompra() {
+        function finalizarCompra() {
         const dni = dniCliente.value.trim();
         const nombre = nombreCliente.value.trim();
 
@@ -229,10 +221,40 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        modalCliente.style.display = 'none';
-        mostrarMensaje('Compra realizada exitosamente');
+        if (!medicamentoSeleccionado) {
+            mostrarMensaje('No hay medicamento seleccionado');
+            return;
+        }
 
-        limpiarFrame();
+        fetch('/farmaplus/index.php?url=ventas/registrar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id_producto: medicamentoSeleccionado.id_producto,
+                cantidad: cantidad,
+                precio_unitario: medicamentoSeleccionado.precio,
+                dni_cliente: dni,
+                nombre_cliente: nombre
+            })
+        })
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (respuesta) {
+            if (respuesta.estado) {
+                modalCliente.style.display = 'none';
+                mostrarMensaje(respuesta.mensaje);
+
+                limpiarFrame();
+            } else {
+                mostrarMensaje(respuesta.mensaje);
+            }
+        })
+        .catch(function () {
+            mostrarMensaje('Error al registrar la venta');
+        });
     }
 
     function limpiarFrame() {

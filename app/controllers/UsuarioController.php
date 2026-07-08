@@ -2,9 +2,13 @@
 
 require_once __DIR__ . '/../Core/Controller.php';
 require_once __DIR__ . '/../Models/Usuario.php';
-
+require_once __DIR__ . '/../core/Auth.php';
 class UsuarioController extends Controller
 {
+        public function __construct()
+    {
+        Auth::verificarRol([1]);
+    }
     public function index()
     {
         $usuario = new Usuario();

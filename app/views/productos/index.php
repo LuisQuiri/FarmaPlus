@@ -8,6 +8,11 @@
     ?>
     <h1>Productos</h1>
 
+    <?php if (isset($_GET['orden']) && $_GET['orden'] === 'ok'): ?>
+        <div class="alerta-exito-orden">
+            Orden realizada con éxito
+        </div>
+    <?php endif; ?>
     <div class="productos-alertas">
         <div class="producto-alerta alerta-bajo-stock" id="btnBajoStock">
             <h3>Bajo stock</h3>
@@ -23,8 +28,9 @@
     <div class="productos-acciones-superiores">
         <button type="button" class="btn-agregar" id="btnAbrirModalProducto">Agregar producto</button>
 
-        <button type="button" id="btnOrdenarProducto">
-            Ordenar producto
+
+        <button type="button" class="btn-ordenar" onclick="abrirModalOrdenProducto()">
+            Ordenar Producto
         </button>
     </div>
 
@@ -426,6 +432,75 @@
     </div>
 </div>
 
+<!-- Modal Ordenar Producto -->
+<div id="modalOrdenProducto" class="modal">
+    <div class="modal-content">
+        <h2>Ordenar Producto</h2>
+
+        <form action="/farmaplus/productos/ordenar" method="POST">
+
+            <div class="form-group">
+                <label for="orden_id_categoria">Categoría</label>
+                <select name="id_categoria" id="orden_id_categoria" required>
+                    <option value="">Seleccione una categoría</option>
+                    <?php foreach ($categorias as $categoria): ?>
+                        <option value="<?= $categoria['id_categoria'] ?>">
+                            <?= $categoria['nombre_categoria'] ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-group" id="grupo_tipo_medicamento_orden" style="display: none;">
+                <label for="orden_id_tipo_medicamento">Tipo de medicamento</label>
+                <select name="id_tipo_medicamento" id="orden_id_tipo_medicamento">
+                    <option value="">Seleccione tipo de medicamento</option>
+                    <?php foreach ($tipos_medicamento as $tipo): ?>
+                        <option value="<?= $tipo['id_tipo_medicamento'] ?>">
+                            <?= $tipo['nombre_tipo'] ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="orden_id_proveedor">Proveedor</label>
+                <select name="id_proveedor" id="orden_id_proveedor" required>
+                    <option value="">Seleccione un proveedor</option>
+                    <?php foreach ($proveedores as $proveedor): ?>
+                        <option
+                            value="<?= $proveedor['id_proveedor'] ?>"
+                            data-categoria="<?= $proveedor['id_categoria'] ?>"
+                            data-correo="<?= $proveedor['correo'] ?>">
+                            <?= $proveedor['razon_social'] ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="orden_correo_proveedor">Correo del proveedor</label>
+                <input type="email" name="correo_proveedor" id="orden_correo_proveedor" readonly required>
+            </div>
+
+            <div class="form-group">
+                <label for="orden_nombre_producto">Producto o medicina solicitada</label>
+                <input type="text" name="nombre_producto" id="orden_nombre_producto" required>
+            </div>
+
+            <div class="form-group">
+                <label for="orden_cantidad_solicitada">Cantidad solicitada</label>
+                <input type="number" name="cantidad_solicitada" id="orden_cantidad_solicitada" min="1" required>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalOrdenProducto()">Cancelar</button>
+                <button type="submit" class="btn-guardar">Solicitar</button>
+            </div>
+
+        </form>
+    </div>
+</div>
 <script>
     const botonesCategoriaProducto = document.querySelectorAll('.btnCategoriaProducto');
     const filasProductos = document.querySelectorAll('#tablaProductos tr');
@@ -658,5 +733,107 @@
                 modalEliminarProducto.classList.remove('activo');
             }
         });
+    }
+
+    const btnAbrirModalOrden = document.getElementById('btnAbrirModalOrden');
+    const modalOrdenProducto = document.getElementById('modalOrdenProducto');
+    const btnCancelarOrden = document.getElementById('btnCancelarOrden');
+
+    const ordenCategoria = document.getElementById('orden_id_categoria');
+    const grupoTipoMedicamentoOrden = document.getElementById('grupo_tipo_medicamento_orden');
+    const ordenTipoMedicamento = document.getElementById('orden_id_tipo_medicamento');
+
+    const ordenProveedor = document.getElementById('orden_id_proveedor');
+    const ordenCorreoProveedor = document.getElementById('orden_correo_proveedor');
+
+    if (btnAbrirModalOrden && modalOrdenProducto) {
+        btnAbrirModalOrden.addEventListener('click', function() {
+            modalOrdenProducto.classList.add('show');
+        });
+    }
+
+    if (btnCancelarOrden && modalOrdenProducto) {
+        btnCancelarOrden.addEventListener('click', function() {
+            modalOrdenProducto.classList.remove('show');
+        });
+    }
+
+    if (ordenCategoria) {
+        ordenCategoria.addEventListener('change', function() {
+            const categoriaSeleccionada = this.value;
+            const categoriaTexto = this.options[this.selectedIndex].text.trim();
+
+            ordenProveedor.value = '';
+            ordenCorreoProveedor.value = '';
+
+            Array.from(ordenProveedor.options).forEach(option => {
+                if (option.value === '') {
+                    option.style.display = 'block';
+                    return;
+                }
+
+                if (option.dataset.categoria === categoriaSeleccionada) {
+                    option.style.display = 'block';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+
+            if (categoriaTexto === 'Medicamentos') {
+                grupoTipoMedicamentoOrden.style.display = 'block';
+                ordenTipoMedicamento.setAttribute('required', 'required');
+            } else {
+                grupoTipoMedicamentoOrden.style.display = 'none';
+                ordenTipoMedicamento.removeAttribute('required');
+                ordenTipoMedicamento.value = '';
+            }
+        });
+    }
+
+    if (ordenProveedor) {
+        ordenProveedor.addEventListener('change', function() {
+            const correo = this.options[this.selectedIndex].dataset.correo || '';
+            ordenCorreoProveedor.value = correo;
+        });
+    }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnAbrirModalOrden = document.getElementById('btnAbrirModalOrden');
+        const modalOrdenProducto = document.getElementById('modalOrdenProducto');
+        const btnCancelarOrden = document.getElementById('btnCancelarOrden');
+
+        if (btnAbrirModalOrden && modalOrdenProducto) {
+            btnAbrirModalOrden.addEventListener('click', function() {
+                modalOrdenProducto.style.display = 'flex';
+            });
+        }
+
+        if (btnCancelarOrden && modalOrdenProducto) {
+            btnCancelarOrden.addEventListener('click', function() {
+                modalOrdenProducto.style.display = 'none';
+            });
+        }
+    });
+</script>
+<script>
+    function abrirModalOrdenProducto() {
+        const modal = document.getElementById('modalOrdenProducto');
+
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+        } else {
+            alert('No se encontró el modal Ordenar Producto');
+        }
+    }
+
+    function cerrarModalOrdenProducto() {
+        const modal = document.getElementById('modalOrdenProducto');
+
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        }
     }
 </script>

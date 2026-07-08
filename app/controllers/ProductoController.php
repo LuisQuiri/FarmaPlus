@@ -2,9 +2,15 @@
 
 require_once __DIR__ . '/../Core/Controller.php';
 require_once __DIR__ . '/../Models/Producto.php';
+require_once __DIR__ . '/../Models/OrdenProducto.php';
+require_once __DIR__ . '/../core/Auth.php';
 
 class ProductoController extends Controller
 {
+        public function __construct()
+    {
+        Auth::verificarRol([1, 3]);
+    }
     public function index()
     {
         $producto = new Producto();
@@ -116,4 +122,29 @@ class ProductoController extends Controller
             exit;
         }
     }
+
+    public function ordenar()
+{
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+        $orden = new OrdenProducto();
+
+        $datos = [
+            'id_categoria' => $_POST['id_categoria'],
+            'id_tipo_medicamento' => !empty($_POST['id_tipo_medicamento']) ? $_POST['id_tipo_medicamento'] : null,
+            'id_proveedor' => $_POST['id_proveedor'],
+            'nombre_producto' => $_POST['nombre_producto'],
+            'cantidad_solicitada' => $_POST['cantidad_solicitada'],
+            'correo_proveedor' => $_POST['correo_proveedor']
+        ];
+
+        $orden->guardar($datos);
+
+        header('Location: /farmaplus/productos?orden=ok');
+        exit;
+    }
+
+    header('Location: /farmaplus/productos');
+    exit;
+}
 }
